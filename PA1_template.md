@@ -1,61 +1,81 @@
----
-output:
-  html_document:
-    keep_md: yes
----
 # Reproducible Research: Peer Assessment 1
 Author: Eddie Kollar
 
 ## Loading and preprocessing the data
 
-`r knitr::opts_chunk$set(fig.path="figures/")`
 
-```{r load data, cache=TRUE, echo=TRUE}
+
+
+```r
 unzip("activity.zip")
 raw_data <- read.csv("activity.csv")
 ```
 
 Preprocessing includes ignoring NA values for now.
 
-```{r preprocess data, echo=TRUE}
+
+```r
 activity_data <- raw_data[!is.na(raw_data$steps),]
 ```
 
 ## What is mean total number of steps taken per day?
 
-```{r steps_hist, echo=TRUE}
-require(plyr)
 
+```r
+require(plyr)
+```
+
+```
+## Loading required package: plyr
+```
+
+```r
 sum_steps_date <-ddply(activity_data, .(date), summarise, total_steps = sum(steps))
 hist(sum_steps_date$total_steps, xlab="Total Steps", main = "Histogram of Total Steps Taken Each Day", col = "blue")
 ```
 
+![plot of chunk steps_hist](figures/steps_hist.png) 
+
 The mean of the total steps taken per day:
-```{r mean_steps, echo=TRUE}
+
+```r
 mean_steps <- mean(sum_steps_date$total_steps)
 mean_steps
 ```
 
+```
+## [1] 10766
+```
+
 Medain of the total steps taken per day:
-```{r median_steps, echo=TRUE}
+
+```r
 median_steps <- median(sum_steps_date$total_steps)
 median_steps
 ```
 
+```
+## [1] 10765
+```
+
 ## What is the average daily activity pattern?
 
-```{r average_daily_plot, echo=TRUE}
+
+```r
 mean_steps_interval <- ddply(activity_data, .(interval), summarise, mean_steps = mean(steps))
 plot(mean_steps_interval, type = "l", xlab = "Interval", ylab="Average Number of Steps")
 ```
 
-At the interval `r mean_steps_interval$interval[which.max(mean_steps_interval$mean_steps)]` we find the maximum value average number of steps at `r max(mean_steps_interval$mean_steps)`
+![plot of chunk average_daily_plot](figures/average_daily_plot.png) 
+
+At the interval 835 we find the maximum value average number of steps at 206.1698
 
 ## Imputing missing values
 
-There are `r sum(is.na(raw_data$steps))` rows with missing values. The strategy for replacing missing values will be to use the rounded mean value for the interval.
+There are 2304 rows with missing values. The strategy for replacing missing values will be to use the rounded mean value for the interval.
 
-```{r imputation, echo=TRUE}
+
+```r
 mean_steps_interval <- ddply(activity_data, .(interval), summarise, mean_steps = mean(steps))
 imputated_data <- raw_data
 
@@ -70,20 +90,33 @@ new_sum_steps <-ddply(imputated_data, .(date), summarise, total_steps = sum(step
 ```
 
 The mean of the total steps taken per day with imputed data:
-```{r new_mean_steps, echo=TRUE}
+
+```r
 mean_steps <- mean(new_sum_steps$total_steps)
 mean_steps
 ```
 
+```
+## [1] 10766
+```
+
 Medain of the total steps taken per day with imputed data:
-```{r new_median_steps, echo=TRUE}
+
+```r
 median_steps <- median(new_sum_steps$total_steps)
 median_steps
 ```
 
-```{r new_steps_hist, echo=TRUE}
+```
+## [1] 10762
+```
+
+
+```r
 hist(new_sum_steps$total_steps, xlab="Total Steps", main = "Histogram of Total Steps Taken Each Day (Imputed Data)", col = "blue")
 ```
+
+![plot of chunk new_steps_hist](figures/new_steps_hist.png) 
 
 The imputed mean is the same and the median of the imputed data is slightly smaller. This information, along with the histogram, we can see that imputation does not seem to have a significant impact in this case. 
 
@@ -93,7 +126,8 @@ The graphs show that there is more activity in the early hours of the morning on
 
 The day begins later for the subjects on the weekends, but there is more activity throughout the day in comparison with the weekdays.
 
-```{r weekday_weekend_activity, echo=TRUE}
+
+```r
 activity_data$day_type <- sapply(activity_data$date, function(x) {
     weekend <- c("Saturday", "Sunday")
     if(weekdays(as.Date(x)) %in% weekend) "weekend" else "weekday"
@@ -106,3 +140,5 @@ steps_by_day_type <- ddply(activity_data, .(interval, day_type), summarise, tota
 library(lattice)
 xyplot(total_steps~interval|day_type,data=steps_by_day_type,aspect=1/2,type="l", ylab = "Average Steps", xlab="Time of Day")
 ```
+
+![plot of chunk weekday_weekend_activity](figures/weekday_weekend_activity.png) 
